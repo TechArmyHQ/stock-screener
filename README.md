@@ -1,4 +1,4 @@
-# 📈 Stock Screener
+# 📈 Stock Screener - https://stock-screener-sooty-xi.vercel.app/
 
 A real-time stock screening tool for Indian markets (NSE/BSE) with browser notifications. Built with Next.js, deployed on Vercel, with automated data updates via GitHub Actions.
 
