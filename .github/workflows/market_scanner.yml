@@ -1,0 +1,40 @@
+name: Market Scanner 📈
+
+on:
+  schedule:
+    # Run every 30 minutes between 03:00 UTC and 11:00 UTC (Approx Indian Market Hours)
+    # 03:00 UTC = 08:30 IST
+    # 11:00 UTC = 16:30 IST
+    - cron: '*/30 3-11 * * 1-5'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to commit changes
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Market Scanner
+        run: npm run scan
+        env:
+          CI: true # Tells script to run once and exit
+
+      - name: Commit and Push Data
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "📈 Update stock market data [skip ci]"
+          file_pattern: 'data/stocks.json'
+          branch: main
