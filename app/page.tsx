@@ -103,8 +103,9 @@ export default function Home() {
 
   // Initial Load & Polling
   useEffect(() => {
-    // NOTE: Removed auto-request for permissions here to fix mobile support.
-    // Permissions must be requested on button click.
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      Notification.requestPermission();
+    }
 
     const savedAlerts = localStorage.getItem('alertFilters');
     if (savedAlerts) {
@@ -186,16 +187,7 @@ export default function Home() {
   };
 
   // Handlers
-  const handleSetAlerts = async () => {
-    // Request Permission on Click (Mobile Requirement)
-    if ('Notification' in window && Notification.permission !== 'granted') {
-      const p = await Notification.requestPermission();
-      if (p !== 'granted') {
-        alert("Please enable notifications to use alerts!");
-        return;
-      }
-    }
-
+  const handleSetAlerts = () => {
     // 1. Calculate New Watchlist
     const newMatches = filteredStocks;
     const newSymbols = new Set(newMatches.map(s => s.symbol));
@@ -251,19 +243,13 @@ export default function Home() {
     localStorage.setItem('theme', newMode ? 'dark' : 'light');
   };
 
-  const testNotification = async () => {
-    if (!('Notification' in window)) {
-      alert("This browser does not support desktop notifications");
-      return;
-    }
-
+  const testNotification = () => {
     if (Notification.permission === "granted") {
       new Notification("Test Notification", { body: "This is how alerts will look!" });
-    } else if (Notification.permission !== "denied") {
-      const p = await Notification.requestPermission();
-      if (p === "granted") new Notification("Test Notification", { body: "This is how alerts will look!" });
     } else {
-      alert("Notifications are blocked. Please reset site permissions in settings.");
+      Notification.requestPermission().then(p => {
+        if (p === "granted") new Notification("Test Notification", { body: "This is how alerts will look!" });
+      });
     }
   };
 
