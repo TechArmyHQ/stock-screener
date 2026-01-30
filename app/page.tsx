@@ -103,8 +103,9 @@ export default function Home() {
 
   // Initial Load & Polling
   useEffect(() => {
-    // NOTE: Do NOT auto-request notification permissions here!
-    // Mobile browsers block permission requests unless triggered by user gesture (button tap).
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      Notification.requestPermission();
+    }
 
     const savedAlerts = localStorage.getItem('alertFilters');
     if (savedAlerts) {
@@ -186,16 +187,7 @@ export default function Home() {
   };
 
   // Handlers
-  const handleSetAlerts = async () => {
-    // Request permission on user gesture (required for mobile)
-    if ('Notification' in window && Notification.permission !== 'granted') {
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        alert("Please enable notifications to use alerts! Check your browser settings.");
-        return;
-      }
-    }
-
+  const handleSetAlerts = () => {
     // 1. Calculate New Watchlist
     const newMatches = filteredStocks;
     const newSymbols = new Set(newMatches.map(s => s.symbol));
@@ -251,23 +243,13 @@ export default function Home() {
     localStorage.setItem('theme', newMode ? 'dark' : 'light');
   };
 
-  const testNotification = async () => {
-    if (!('Notification' in window)) {
-      alert("This browser does not support notifications.");
-      return;
-    }
-
+  const testNotification = () => {
     if (Notification.permission === "granted") {
       new Notification("Test Notification", { body: "This is how alerts will look!" });
-    } else if (Notification.permission === "denied") {
-      alert("Notifications are blocked. Please enable them in your browser settings.");
     } else {
-      const permission = await Notification.requestPermission();
-      if (permission === "granted") {
-        new Notification("Test Notification", { body: "This is how alerts will look!" });
-      } else {
-        alert("Permission denied. You can enable notifications in browser settings.");
-      }
+      Notification.requestPermission().then(p => {
+        if (p === "granted") new Notification("Test Notification", { body: "This is how alerts will look!" });
+      });
     }
   };
 
