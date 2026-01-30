@@ -2,10 +2,8 @@ name: Market Scanner 📈
 
 on:
   schedule:
-    # Run every 30 minutes between 03:00 UTC and 11:00 UTC (Approx Indian Market Hours)
-    # 03:00 UTC = 08:30 IST
-    # 11:00 UTC = 16:30 IST
-    - cron: '*/30 3-11 * * 1-5'
+    # Run every 5 minutes (Fastest allowed by GitHub Actions) between 03:00 UTC and 11:00 UTC
+    - cron: '*/5 3-11 * * 1-5'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
