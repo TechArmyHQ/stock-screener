@@ -17,6 +17,32 @@ const DEFAULT_FILTERS: FilterConfig = {
   maxDebtToEquity: ''
 };
 
+// Cross-platform notification helper
+// Uses Service Worker on mobile (Android Chrome) and falls back to new Notification() on desktop
+const showNotification = async (title: string, body: string) => {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+
+  try {
+    // Try Service Worker method first (required for Android Chrome)
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.showNotification(title, { body, icon: '/icon-192.png' });
+    } else {
+      // Fallback to direct Notification (works on desktop)
+      new Notification(title, { body });
+    }
+  } catch (error) {
+    console.error('Notification error:', error);
+    // Final fallback
+    try {
+      new Notification(title, { body });
+    } catch (e) {
+      console.error('Fallback notification also failed:', e);
+    }
+  }
+};
+
 const applyFilters = (stockList: Stock[], filters: FilterConfig) => {
   return stockList.filter(stock => {
     if (filters.search && !stock.symbol.toLowerCase().includes(filters.search.toLowerCase()) &&
@@ -103,8 +129,11 @@ export default function Home() {
 
   // Initial Load & Polling
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      Notification.requestPermission();
+    // Register Service Worker (required for mobile notifications)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(err => {
+        console.error('Service Worker registration failed:', err);
+      });
     }
 
     const savedAlerts = localStorage.getItem('alertFilters');
@@ -170,9 +199,7 @@ export default function Home() {
 
           if (added.length > 0 || removed.length > 0) {
             const msg = `Alert: ${added.length} added, ${removed.length} removed from your watchlist.`;
-            if (Notification.permission === "granted") {
-              new Notification("Market Scanner Update", { body: msg });
-            }
+            showNotification("Market Scanner Update", msg);
           }
         }
 
@@ -187,7 +214,16 @@ export default function Home() {
   };
 
   // Handlers
-  const handleSetAlerts = () => {
+  const handleSetAlerts = async () => {
+    // Request permission on user gesture (required for mobile)
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        alert("Please enable notifications to use alerts! Check your browser settings.");
+        return;
+      }
+    }
+
     // 1. Calculate New Watchlist
     const newMatches = filteredStocks;
     const newSymbols = new Set(newMatches.map(s => s.symbol));
@@ -199,19 +235,10 @@ export default function Home() {
       const removed = [...oldSymbols].filter(x => !newSymbols.has(x));
 
       const msg = `Rules Updated: ${added.length} added, ${removed.length} removed from watchlist.`;
-
-      if (Notification.permission === "granted") {
-        new Notification("Stock Screener", { body: msg });
-      } else {
-        alert(msg);
-      }
+      showNotification("Stock Screener", msg);
     } else {
       const msg = `Alerts Enabled! Now tracking ${newMatches.length} stocks.`;
-      if (Notification.permission === "granted") {
-        new Notification("Stock Screener", { body: msg });
-      } else {
-        alert(msg);
-      }
+      showNotification("Stock Screener", msg);
     }
 
     // 3. Update State & Persistence
@@ -243,13 +270,23 @@ export default function Home() {
     localStorage.setItem('theme', newMode ? 'dark' : 'light');
   };
 
-  const testNotification = () => {
+  const testNotification = async () => {
+    if (!('Notification' in window)) {
+      alert("This browser does not support notifications.");
+      return;
+    }
+
     if (Notification.permission === "granted") {
-      new Notification("Test Notification", { body: "This is how alerts will look!" });
+      showNotification("Test Notification", "This is how alerts will look!");
+    } else if (Notification.permission === "denied") {
+      alert("Notifications are blocked. Please enable them in your browser settings.");
     } else {
-      Notification.requestPermission().then(p => {
-        if (p === "granted") new Notification("Test Notification", { body: "This is how alerts will look!" });
-      });
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        showNotification("Test Notification", "This is how alerts will look!");
+      } else {
+        alert("Permission denied. You can enable notifications in browser settings.");
+      }
     }
   };
 
