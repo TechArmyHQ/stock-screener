@@ -292,7 +292,7 @@ export default function Home() {
 
             <button
               onClick={handleLoadWatchlist}
-              className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-full font-bold text-sm shadow-lg shadow-pink-600/20 transition flex items-center gap-2"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-bold text-sm shadow-lg shadow-blue-600/20 transition flex items-center gap-2"
             >
               <span>Watchlist: {watchlistCount}</span>
             </button>
@@ -304,6 +304,36 @@ export default function Home() {
 
           {/* Sidebar */}
           <aside className="lg:col-span-3 space-y-6">
+            {isAlertsActive && (
+              <div className="bg-white dark:bg-[#161b22] rounded-xl border border-blue-200 dark:border-blue-900/30 p-5 shadow-sm transition-colors relative overflow-hidden mb-6">
+                <div className="absolute top-0 right-0 p-2 opacity-10">
+                  <svg className="w-16 h-16 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
+                </div>
+                <h3 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase mb-3 flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                  </span>
+                  Active Monitoring Rules
+                </h3>
+                <div className="space-y-1">
+                  {Object.entries(alertFilters).map(([key, value]) => {
+                    if (!value) return null;
+                    const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                    return (
+                      <div key={key} className="flex justify-between text-xs border-b border-gray-100 dark:border-gray-800/50 last:border-0 py-1">
+                        <span className="text-gray-500 dark:text-gray-400">{label}</span>
+                        <span className="font-mono font-medium text-gray-900 dark:text-white">{value}</span>
+                      </div>
+                    );
+                  })}
+                  {Object.values(alertFilters).every(x => x === '') && (
+                    <p className="text-xs text-gray-400 italic">No specific filters (Catch-all)</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="bg-white dark:bg-[#161b22] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm transition-colors">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Filters</h3>
@@ -352,6 +382,8 @@ export default function Home() {
                 <span className="text-gray-900 dark:text-white font-medium">{stocks.length}</span>
               </div>
             </div>
+
+
           </aside>
 
           {/* Content */}
