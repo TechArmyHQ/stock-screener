@@ -271,8 +271,18 @@ export default function Home() {
   };
 
   const testNotification = async () => {
+    // Check if running as installed PWA
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+
+    // Detect iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
     if (!('Notification' in window)) {
-      alert("This browser does not support notifications.");
+      if (isIOS) {
+        alert("📱 iOS Notification Support:\n\n1. Tap the Share button (box with arrow)\n2. Select 'Add to Home Screen'\n3. Open the app from your Home Screen\n4. Then notifications will work!");
+      } else {
+        alert("This browser does not support notifications.");
+      }
       return;
     }
 
